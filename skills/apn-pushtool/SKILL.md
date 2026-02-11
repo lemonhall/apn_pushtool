@@ -44,6 +44,10 @@ description: 本地 APNs 推送 CLI（.env 配置 + 可选 E2E 真推送），�
 - `$HOME\\.agents\\skills\\apn-pushtool\\secrets\\.env`
 - `$HOME\\.agents\\skills\\apn-pushtool\\secrets\\apns_authkey.p8`
 
+`.p8` 获取方式：
+- 在 **“APNs Tool” → Credentials** 里复制 P8 私钥内容，保存为文本文件并改后缀为 `.p8`。
+- 建议 `.p8` 与 `.env` 同目录，此时 `.env` 里可以写：`APNS_P8_PATH=apns_authkey.p8`（会按 `.env` 所在目录解析）。
+
 代理（可选）：
 - `HTTP_PROXY` / `HTTPS_PROXY`（例如 `http://127.0.0.1:7897`）
 

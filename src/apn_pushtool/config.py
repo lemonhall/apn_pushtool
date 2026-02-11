@@ -58,6 +58,20 @@ def _read_text_file(path: Path) -> str:
         raise ConfigError(f"File not found: {path}") from e
 
 
+def _resolve_path(path_str: str, *, dotenv_path: str | None) -> Path:
+    path = Path(path_str).expanduser()
+    if path.is_absolute():
+        return path
+
+    if dotenv_path:
+        base = Path(dotenv_path).expanduser()
+        base_dir = base if base.is_dir() else base.parent
+    else:
+        base_dir = Path.cwd()
+
+    return (base_dir / path).resolve()
+
+
 def load_apns_credentials(*, dotenv_path: str | None = None) -> ApnsCredentials:
     """
     Load APNs credentials from environment variables (optionally loading a .env first).
@@ -89,7 +103,8 @@ def load_apns_credentials(*, dotenv_path: str | None = None) -> ApnsCredentials:
 
     p8_private_key_pem = p8_inline
     if p8_path:
-        p8_private_key_pem = _read_text_file(Path(p8_path))
+        resolved_p8 = _resolve_path(p8_path, dotenv_path=dotenv_path)
+        p8_private_key_pem = _read_text_file(resolved_p8)
 
     # Environment
     env_value = os.getenv("APNS_ENV", "").strip().lower()

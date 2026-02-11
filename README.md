@@ -2,6 +2,13 @@
 
 基于Python的Apple Push Notification推送工具，用于向iOS设备发送推送通知。
 
+## 使用前提（iOS 端）
+要让这套推送链路真正“可用”，你需要 iPhone 上有一个**已启用 APNs 推送能力**的 App 来：
+- 产生可用的 `Device Token`
+- 接收你从本工具发出的推送通知
+
+例如：你可以在 App Store 安装你使用的 iOS 应用 **“APNs Tool”**，并在其中获取 `Device Token`（以及确认对应的 `Bundle ID` / 环境为 `sandbox` 或 `production`）。
+
 ## 功能特点
 
 - 🚀 使用Apple官方HTTP/2 APNs协议
@@ -59,13 +66,30 @@ notepad .env
 
 ### 3. 获取必要信息
 
-从你的iOS应用或Apple Developer控制台获取：
+从 iOS App **“APNs Tool”**（第二个页签 **Credentials**）或 Apple Developer 控制台获取/确认以下信息，然后填写到你的 `.env` 里：
 
-- **Team ID**: Apple Developer账户的团队ID
-- **Key ID**: APNs认证密钥ID
-- **P8私钥**: 下载的.p8认证密钥文件内容
-- **Bundle ID**: iOS应用的Bundle Identifier
-- **Device Token**: 从iOS设备获取的推送token
+- `APNS_TEAM_ID`（Team ID）
+- `APNS_KEY_ID`（Key ID）
+- `APNS_BUNDLE_ID`（Bundle ID / Topic）
+- `APNS_DEVICE_TOKEN`（Device Token）
+- `APNS_ENV`（sandbox/production，与 token 环境匹配）
+
+关于 `.p8`：
+- 你可以在 **“APNs Tool” → Credentials** 中直接复制 **P8 私钥内容**，保存为一个文本文件并把后缀改成 `.p8`（例如 `apns_authkey.p8`）。
+- 然后在 `.env` 里填写 `APNS_P8_PATH` 指向该文件。
+  - 推荐把 `.p8` 放在 `.env` 同目录下，此时可以直接写相对路径：`APNS_P8_PATH=apns_authkey.p8`（本工具会按 `.env` 所在目录解析）。
+- 也可以把私钥内容直接写入 `APNS_P8_PRIVATE_KEY`（不推荐，容易多行转义出错）。
+
+### 推荐的文件放置（SKILL + secrets）
+建议把 secrets 跟随 SKILL 一起放在 `~/.agents/skills/apn-pushtool/` 下，方便在任意目录直接调用：
+
+```text
+C:\Users\<you>\.agents\skills\apn-pushtool\
+├── SKILL.md
+└── secrets\
+    ├── .env
+    └── apns_authkey.p8
+```
 
 ### 4. 运行推送工具
 
@@ -74,6 +98,16 @@ apn-pushtool --help
 apn-pushtool doctor
 apn-pushtool send --title "测试" --body "Hello APNs"
 ```
+
+## 在 Codex 里用 SKILL 触发发送
+如果你已经把 SKILL 安装到 `~/.agents/skills/apn-pushtool/`（见下方目录结构），在 Codex 对话里直接用技能名触发即可：
+
+- 发送一条推送：`$apn-pushtool 给我手机发一条消息，就说该吃饭了`
+- 自定义标题与内容：`$apn-pushtool 用“提醒”做标题，内容写“记得喝水”`
+
+说明：
+- 该 SKILL 会调用本机已安装的全局命令 `apn-pushtool`。
+- 默认读取 `APNS_DOTENV`，若未设置则读取 `~/.agents/skills/apn-pushtool/secrets/.env`（如果存在）。
 
 ## 代码示例
 

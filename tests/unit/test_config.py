@@ -52,3 +52,32 @@ def test_load_apns_credentials_reads_p8_from_env(monkeypatch: pytest.MonkeyPatch
     creds = load_apns_credentials()
     assert "BEGIN PRIVATE KEY" in creds.p8_private_key_pem
 
+
+def test_load_apns_credentials_resolves_relative_p8_path_from_dotenv(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.delenv("APNS_TEAM_ID", raising=False)
+    monkeypatch.delenv("APNS_KEY_ID", raising=False)
+    monkeypatch.delenv("APNS_BUNDLE_ID", raising=False)
+    monkeypatch.delenv("APNS_P8_PATH", raising=False)
+    monkeypatch.delenv("APNS_P8_PRIVATE_KEY", raising=False)
+
+    p8 = tmp_path / "apns_authkey.p8"
+    p8.write_text("-----BEGIN PRIVATE KEY-----\nTEST\n-----END PRIVATE KEY-----\n", encoding="utf-8")
+    env = tmp_path / ".env"
+    env.write_text(
+        "\n".join(
+            [
+                "APNS_TEAM_ID=TEAM",
+                "APNS_KEY_ID=KEY",
+                "APNS_BUNDLE_ID=com.example.app",
+                "APNS_P8_PATH=apns_authkey.p8",
+                "APNS_ENV=production",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    creds = load_apns_credentials(dotenv_path=str(env))
+    assert "BEGIN PRIVATE KEY" in creds.p8_private_key_pem

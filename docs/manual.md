@@ -62,6 +62,12 @@ uv run apn-pushtool init-from-legacy --force
 - `APNS_DEVICE_TOKEN`（也可以运行时用 `--device-token` 传）
 - `APNS_ENV`：`sandbox` 或 `production`
 
+### `.p8` 文件的获取方式（APNs Tool）
+在 **“APNs Tool” → Credentials** 里复制 P8 私钥内容，保存为文本文件并把后缀改成 `.p8`（例如 `apns_authkey.p8`），然后在 `.env` 中设置：
+- `APNS_P8_PATH=apns_authkey.p8`
+
+如果 `.p8` 与 `.env` 在同一目录，`APNS_P8_PATH` 可以用相对路径；本工具会按 `.env` 所在目录解析。
+
 ### 推荐放置 secrets 的位置（便于跨目录调用）
 如果你希望“全局安装 CLI + 全局 SKILL”后在任意目录直接用，推荐把 secrets 放在：
 - `.env`：`$HOME\\.agents\\skills\\apn-pushtool\\secrets\\.env`
