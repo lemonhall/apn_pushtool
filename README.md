@@ -18,6 +18,12 @@
 - 🛠️ 交互式命令行工具
 - ⚡ 异步处理，高效稳定
 
+## 截图
+
+![screenshot](screenshot.jpg)
+
+![screenshot2](screenshot2.png)
+
 ## 快速开始
 
 ### 1. 安装依赖
