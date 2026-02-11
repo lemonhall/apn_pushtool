@@ -1,0 +1,28 @@
+[project]
+name = "apn-pushtool"
+version = "0.1.0"
+description = "Apple Push Notification (APNs) push CLI tool"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx[http2]>=0.25.0",
+    "cryptography>=41.0.0",
+    "pyjwt>=2.8.0",
+    "python-dotenv>=1.0.1",
+]
+
+[project.scripts]
+apn-pushtool = "apn_pushtool.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.24.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/apn_pushtool"]
