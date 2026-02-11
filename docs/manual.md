@@ -62,6 +62,15 @@ uv run apn-pushtool init-from-legacy --force
 - `APNS_DEVICE_TOKEN`（也可以运行时用 `--device-token` 传）
 - `APNS_ENV`：`sandbox` 或 `production`
 
+### 推荐放置 secrets 的位置（便于跨目录调用）
+如果你希望“全局安装 CLI + 全局 SKILL”后在任意目录直接用，推荐把 secrets 放在：
+- `.env`：`$HOME\\.agents\\skills\\apn-pushtool\\secrets\\.env`
+- `.p8`：`$HOME\\.agents\\skills\\apn-pushtool\\secrets\\apns_authkey.p8`
+
+然后在该 `.env` 里把 `APNS_P8_PATH` 指向上面的 `.p8` 路径。
+
+CLI 会自动优先读取 `APNS_DOTENV`，若未设置则会尝试读取上述 skill-local `.env`。
+
 ## 3. 配置诊断（不打印私钥全文）
 ```powershell
 apn-pushtool doctor

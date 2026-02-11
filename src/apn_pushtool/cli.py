@@ -20,6 +20,21 @@ from apn_pushtool.config import (
 )
 
 
+def _default_dotenv_path() -> str:
+    # 1) Explicit env var always wins (so user can keep secrets anywhere)
+    env = os.getenv("APNS_DOTENV", "").strip()
+    if env:
+        return env
+
+    # 2) If installed as a skill, prefer the skill-local secrets folder
+    skill_dotenv = Path.home() / ".agents" / "skills" / "apn-pushtool" / "secrets" / ".env"
+    if skill_dotenv.exists():
+        return str(skill_dotenv)
+
+    # 3) Fallback to current working directory
+    return ".env"
+
+
 def _redact(value: str, *, keep_start: int = 6, keep_end: int = 4) -> str:
     v = value.strip()
     if len(v) <= keep_start + keep_end:
@@ -35,8 +50,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(prog="apn-pushtool", description="APNs push CLI tool")
     p.add_argument(
         "--dotenv",
-        default=os.getenv("APNS_DOTENV", ".env"),
-        help="Path to .env file (default: APNS_DOTENV or .env). Use '' to skip.",
+        default=_default_dotenv_path(),
+        help="Path to .env file (default: APNS_DOTENV, else ~/.agents/skills/apn-pushtool/secrets/.env if exists, else .env). Use '' to skip.",
     )
 
     sub = p.add_subparsers(dest="cmd", required=True)

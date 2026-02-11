@@ -40,6 +40,10 @@ description: 本地 APNs 推送 CLI（.env 配置 + 可选 E2E 真推送），�
 建议在系统环境变量里设置默认 dotenv 路径，方便全局调用：
 - `APNS_DOTENV=<你的 .env 路径>`
 
+推荐（skill-local secrets）：
+- `$HOME\\.agents\\skills\\apn-pushtool\\secrets\\.env`
+- `$HOME\\.agents\\skills\\apn-pushtool\\secrets\\apns_authkey.p8`
+
 代理（可选）：
 - `HTTP_PROXY` / `HTTPS_PROXY`（例如 `http://127.0.0.1:7897`）
 
