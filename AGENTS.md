@@ -8,9 +8,10 @@
 ## Quick Commands（PowerShell）
 - 安装依赖（推荐）：`uv sync`
 - 配置（首次）：`Copy-Item .env.example .env`
-- 配置诊断：`uv run apn-pushtool doctor`
-- 发送单条推送：`uv run apn-pushtool send --title "测试" --body "Hello APNs"`
-- 发送长文本：`uv run apn-pushtool send-long --title "测试" --text "长文本..."`
+- 全局安装 CLI（一次性）：`uv tool install -e . ; uv tool update-shell`
+- 配置诊断：`apn-pushtool doctor`
+- 发送单条推送：`apn-pushtool send --title "测试" --body "Hello APNs"`
+- 发送长文本：`apn-pushtool send-long --title "测试" --text "长文本..."`
 
 ## 语言与代码风格
 - Python：`>=3.13`（见 `pyproject.toml` 与 `.python-version`）

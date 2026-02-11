@@ -3,8 +3,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 from pathlib import Path
 import sys
+from datetime import datetime
+import importlib.machinery
+import importlib.util
 from typing import Any
 
 from apn_pushtool.client import ApnsClient
@@ -29,9 +33,33 @@ def _bool_env_hint() -> str:
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(prog="apn-pushtool", description="APNs push CLI tool")
-    p.add_argument("--dotenv", default=".env", help="Path to .env file (default: .env). Use '' to skip.")
+    p.add_argument(
+        "--dotenv",
+        default=os.getenv("APNS_DOTENV", ".env"),
+        help="Path to .env file (default: APNS_DOTENV or .env). Use '' to skip.",
+    )
 
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    init_legacy = sub.add_parser(
+        "init-from-legacy",
+        help="Generate .env and a local .p8 file from legacy __pycache__/config*.pyc (no secret values printed).",
+    )
+    init_legacy.add_argument(
+        "--legacy-pyc",
+        default=r"__pycache__\config.cpython-313.pyc",
+        help="Path to legacy config .pyc (default: __pycache__\\config.cpython-313.pyc).",
+    )
+    init_legacy.add_argument(
+        "--p8-out",
+        default=r"secrets\apns_authkey.p8",
+        help="Where to write the recovered .p8 content (default: secrets\\apns_authkey.p8).",
+    )
+    init_legacy.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing .env (will create a timestamped .env.bak.* backup).",
+    )
 
     doctor = sub.add_parser("doctor", help="Validate current config (does not print private key).")
     doctor.add_argument("--device-token", default="", help="Optional device token to validate.")
@@ -66,6 +94,72 @@ def _dotenv_path(value: str) -> str | None:
     if value == "":
         return None
     return value
+
+
+def _write_env_file(path: Path, *, lines: list[str], force: bool) -> None:
+    if path.exists():
+        if not force:
+            raise ConfigError(f"{path} already exists. Re-run with --force to overwrite.")
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        backup = path.with_name(f"{path.name}.bak.{ts}")
+        path.replace(backup)
+
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _load_legacy_config_from_pyc(pyc_path: Path) -> Any:
+    if not pyc_path.exists():
+        raise ConfigError(f"Legacy .pyc not found: {pyc_path}")
+
+    loader = importlib.machinery.SourcelessFileLoader("legacy_config", pyc_path.as_posix())
+    spec = importlib.util.spec_from_loader("legacy_config", loader)
+    if spec is None:
+        raise ConfigError("Failed to load legacy config spec.")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    return module
+
+
+def cmd_init_from_legacy(args: argparse.Namespace) -> int:
+    dotenv_path = _dotenv_path(args.dotenv)
+    if dotenv_path is None:
+        raise ConfigError("--dotenv cannot be empty for init-from-legacy.")
+
+    legacy = _load_legacy_config_from_pyc(Path(args.legacy_pyc))
+
+    team_id = str(getattr(legacy, "TEAM_ID", "")).strip()
+    key_id = str(getattr(legacy, "KEY_ID", "")).strip()
+    bundle_id = str(getattr(legacy, "BUNDLE_ID", "")).strip()
+    device_token = str(getattr(legacy, "DEVICE_TOKEN", "")).strip()
+    p8_private_key = str(getattr(legacy, "P8_PRIVATE_KEY", "")).strip()
+    use_sandbox = bool(getattr(legacy, "USE_SANDBOX", False))
+
+    if not team_id or not key_id or not bundle_id or not device_token or not p8_private_key:
+        raise ConfigError("Legacy config missing required fields (TEAM_ID/KEY_ID/BUNDLE_ID/DEVICE_TOKEN/P8_PRIVATE_KEY).")
+
+    device_token = normalize_device_token(device_token)
+    if not is_valid_device_token(device_token):
+        raise ConfigError("Legacy DEVICE_TOKEN is not a valid 64-hex token.")
+
+    p8_out = Path(args.p8_out)
+    p8_out.parent.mkdir(parents=True, exist_ok=True)
+    p8_out.write_text(p8_private_key.strip() + "\n", encoding="utf-8")
+
+    env_value = "sandbox" if use_sandbox else "production"
+
+    env_lines = [
+        f"APNS_TEAM_ID={team_id}",
+        f"APNS_KEY_ID={key_id}",
+        f"APNS_BUNDLE_ID={bundle_id}",
+        f"APNS_P8_PATH={p8_out.as_posix()}",
+        f"APNS_ENV={env_value}",
+        f"APNS_DEVICE_TOKEN={device_token}",
+    ]
+
+    _write_env_file(Path(dotenv_path), lines=env_lines, force=bool(args.force))
+    print(f"✅ Wrote {dotenv_path} and {p8_out.as_posix()} (values not printed).")
+    return 0
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
@@ -162,6 +256,9 @@ def main(argv: list[str] | None = None) -> None:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
     try:
+        if args.cmd == "init-from-legacy":
+            raise SystemExit(cmd_init_from_legacy(args))
+
         if args.cmd == "doctor":
             raise SystemExit(cmd_doctor(args))
 

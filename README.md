@@ -19,6 +19,26 @@
 uv sync
 ```
 
+### 1.5 全局安装 CLI（推荐）
+安装为全局命令后，可直接运行 `apn-pushtool`（不需要 `uv run ...`）。
+
+本地仓库（开发/可编辑）：
+```powershell
+uv tool install -e .
+uv tool update-shell
+```
+
+新机器一键安装（从 GitHub）：
+```powershell
+uv tool install git+https://github.com/lemonhall/apn_pushtool
+uv tool update-shell
+```
+
+重开终端后验证：
+```powershell
+apn-pushtool --help
+```
+
 ### 2. 配置认证信息
 
 本项目使用环境变量（推荐配合 `.env`）注入敏感信息，避免把密钥写进仓库。
@@ -50,9 +70,9 @@ notepad .env
 ### 4. 运行推送工具
 
 ```powershell
-uv run apn-pushtool --help
-uv run apn-pushtool doctor
-uv run apn-pushtool send --title "测试" --body "Hello APNs"
+apn-pushtool --help
+apn-pushtool doctor
+apn-pushtool send --title "测试" --body "Hello APNs"
 ```
 
 ## 代码示例
@@ -65,7 +85,7 @@ from apn_pushtool.client import ApnsClient
 from apn_pushtool.config import load_apns_credentials
 
 async def send_notification():
-    creds = load_apns_credentials()
+    creds = load_apns_credentials(dotenv_path=".env")
     client = ApnsClient(creds)
     
     payload = client.create_basic_payload(title="Hello", body="这是一条推送消息", badge=1)

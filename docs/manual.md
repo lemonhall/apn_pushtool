@@ -10,10 +10,48 @@
 uv sync
 ```
 
+## 1.5 全局安装 CLI（推荐）
+把工具安装成全局命令后，就可以在任意目录直接运行 `apn-pushtool`（不需要 `uv run ...`）。
+
+本地仓库（开发/可编辑）：
+```powershell
+uv tool install -e .
+uv tool update-shell
+```
+
+新机器一键安装（从 GitHub）：
+```powershell
+uv tool install git+https://github.com/lemonhall/apn_pushtool
+uv tool update-shell
+```
+
+执行 `uv tool update-shell` 后建议重开终端，然后验证：
+```powershell
+apn-pushtool --help
+```
+
+## 1.6 安装本技能到 `~/.agents/skills`（可选）
+如果你希望 Codex/agents 能直接发现该 SKILL，可以把仓库内的 skill 安装到你的全局 skills 目录。
+
+方式 A（PowerShell 脚本，拷贝到 `$HOME\\.agents\\skills`）：
+```powershell
+pwsh -File .\\scripts\\install-skill.ps1
+```
+
+方式 B（如果你已安装 `skills` CLI）：
+```powershell
+npx skills add lemonhall/apn_pushtool --skill apn-pushtool -g --agent codex
+```
+
 ## 2. 配置（推荐用 .p8 路径）
 ```powershell
 Copy-Item .env.example .env
 notepad .env
+```
+
+如果你是从旧版脚本迁移过来，且仓库里还保留了 `__pycache__\\config*.pyc`，可以一键恢复：
+```powershell
+uv run apn-pushtool init-from-legacy --force
 ```
 
 至少填写这些变量：
@@ -26,27 +64,27 @@ notepad .env
 
 ## 3. 配置诊断（不打印私钥全文）
 ```powershell
-uv run apn-pushtool doctor
+apn-pushtool doctor
 ```
 
 ## 4. 发送一条推送
 ```powershell
-uv run apn-pushtool send --title "测试推送" --body "Hello APNs"
+apn-pushtool send --title "测试推送" --body "Hello APNs"
 ```
 
 指定 token（不使用 `APNS_DEVICE_TOKEN`）：
 ```powershell
-uv run apn-pushtool send --title "测试推送" --body "Hello APNs" --device-token "<64-hex-token>"
+apn-pushtool send --title "测试推送" --body "Hello APNs" --device-token "<64-hex-token>"
 ```
 
 ## 5. 发送长文本（自动切分 + 倒序发送）
 ```powershell
-uv run apn-pushtool send-long --title "长消息" --text "这里是一段很长很长的文本..."
+apn-pushtool send-long --title "长消息" --text "这里是一段很长很长的文本..."
 ```
 
 或从文件读取：
 ```powershell
-uv run apn-pushtool send-long --title "长消息" --text-file .\\test.txt
+apn-pushtool send-long --title "长消息" --text-file .\\test.txt
 ```
 
 ## 6. 运行测试

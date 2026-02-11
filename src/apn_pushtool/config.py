@@ -39,7 +39,7 @@ def is_valid_device_token(token: str) -> bool:
     return True
 
 
-def load_device_token(*, dotenv_path: str | None = ".env") -> str:
+def load_device_token(*, dotenv_path: str | None = None) -> str:
     if dotenv_path:
         load_dotenv(dotenv_path, override=False)
     token = os.getenv("APNS_DEVICE_TOKEN", "").strip()
@@ -58,7 +58,7 @@ def _read_text_file(path: Path) -> str:
         raise ConfigError(f"File not found: {path}") from e
 
 
-def load_apns_credentials(*, dotenv_path: str | None = ".env") -> ApnsCredentials:
+def load_apns_credentials(*, dotenv_path: str | None = None) -> ApnsCredentials:
     """
     Load APNs credentials from environment variables (optionally loading a .env first).
 
